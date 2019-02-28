@@ -17,6 +17,16 @@ class HttpServer
     HttpServer():_ser_sock(-1)
     {}
 
+    void Close()
+    {
+      close(_ser_sock);
+    }
+
+    ~HttpServer()
+    {
+      Close();
+    }
+
     HttpServer(std::string ip,int port):_ip(ip),_port(port) 
     {}
 
@@ -86,20 +96,30 @@ class HttpServer
   private:
     static bool (HttpHandler)(int sock)// Http任务处理 
     {
-      std::cout << "hello" << std::endl;
       RequestInfo info;
       std::string head;
       HttpRequest req(sock);
       HttpResponse rsp(sock);
 
+      //接受头部
       if(req.RecvHttpHead(info) == false)
       {
         rsp.ErrHandler(info);
         return false;
       }
-      req.ParseHttpHead(head);
-     // else 
-     //   rsp.FileHandler(info); 
+      //解析http头部 
+      if(req.ParseHttpHead(info) == false)
+      {
+        rsp.ErrHandler(info);
+        return false;
+      }
+      if(info.RequestIsCGI())
+      {
+        //如果请求类型是CGI请求，则执行CGI响应
+        rsp.CGIHandler(info);
+      }
+      else//不是，执行目录列表/文件下载 
+        rsp.FileHandler(info); 
       return true;
     }
     
