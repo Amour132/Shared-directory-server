@@ -562,7 +562,7 @@ class HttpResponse
       close(out[1]);
 
       auto it = info._hdr_list.find("Content-Length");
-      if(it == info._hdr_list.end())
+      if(it != info._hdr_list.end())
       {
         //不需要提交正文数据
         char buff[MAX_BUFF];
