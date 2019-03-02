@@ -727,7 +727,6 @@ class Upload
 
     bool ProcessUpLoad()
     {
-      std::cerr << _content_len << std::endl;
       int64_t tlen = 0;
       int64_t blen = 0;
       char buff[MAX_BUFF];
@@ -752,6 +751,7 @@ class Upload
             CreateFile();
             blen -= content_pos;
             memmove(buff,buff+content_pos,blen);
+            buff[blen] = '\0';
           }
           else 
           {
@@ -805,8 +805,7 @@ class Upload
         {
           //1.将类似yuboundry位置之前的数据写入文件
           //2.移除之前的数据
-          //剩下的数据不动，重新接收，补全后匹配
-          WriteFile(buff,boundry_pos);
+          //剩下的数据不动，重新接收，补全后匹配          WriteFile(buff,boundry_pos);
           blen -= boundry_pos;
           memmove(buff,buff+boundry_pos,blen);
         }
@@ -831,12 +830,12 @@ class Upload
       }
       for(int i = 0; i< blen; i++)
       {
-        if(!memcpy(buff+i,_m_boundry.c_str(),_m_boundry.size()))
+        if(!memcmp(buff+i,_m_boundry.c_str(),_m_boundry.size()))
         {
           *boundry_pos = i;
           return BOUNDRY_MIDDLE;
         }
-        else if(!memcpy(buff+i,_l_boundry.c_str(),_l_boundry.size()))
+        else if(!memcmp(buff+i,_l_boundry.c_str(),_l_boundry.size()))
         {
           *boundry_pos = i;
           return BOUNDRY_LAST;
@@ -844,19 +843,20 @@ class Upload
         else
         {
           int cmp_len = (blen-i) > _m_boundry.size() ?_m_boundry.size() : (blen-i);
-          if(!memcpy(buff+i,_l_boundry.c_str(),cmp_len)) 
+          if(!memcmp(buff+i,_l_boundry.c_str(),cmp_len)) 
           {
             *boundry_pos = i;
             return BOUNDRY_BAK;
           }
-          if(!memcpy(buff+i,_m_boundry.c_str(),cmp_len))
+          if(!memcmp(buff+i,_m_boundry.c_str(),cmp_len))
           {
             *boundry_pos = i;
             return BOUNDRY_BAK;
           }
         }
-        return BOUNDRY_NO;
+      
       }
+      return BOUNDRY_NO;
     }
 
     bool GetFileName(char* buff,int* content_pos) 
